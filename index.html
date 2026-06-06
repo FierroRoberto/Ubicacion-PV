@@ -1,0 +1,764 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no"/>
+  <meta name="theme-color" content="#080c1a"/>
+  <meta name="apple-mobile-web-app-capable" content="yes"/>
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+  <meta name="apple-mobile-web-app-title" content="PdV Visitas"/>
+  <title>Ubicacion de Punto de Venta</title>
+
+  <link rel="manifest" href="manifest.json"/>
+  <link rel="apple-touch-icon" href="icons/icon-192x192.png"/>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500&display=swap" rel="stylesheet"/>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+
+  <style>
+  /* ─── Reset ─────────────────────────────────────────── */
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+  html { -webkit-text-size-adjust: 100%; }
+
+  /* ─── Tokens ─────────────────────────────────────────── */
+  :root {
+    /* Palette — deep mineral with amber-gold accent */
+    --ink:        #080c1a;
+    --ink2:       #0d1225;
+    --glass:      rgba(255,255,255,0.032);
+    --glass2:     rgba(255,255,255,0.06);
+    --rim:        rgba(255,255,255,0.07);
+    --rim2:       rgba(255,255,255,0.13);
+    --gold:       #e8a830;
+    --gold-hi:    #f5c252;
+    --gold-lo:    rgba(232,168,48,0.10);
+    --gold-md:    rgba(232,168,48,0.22);
+    --text:       #c8d4ee;
+    --text-lo:    #5a6a8a;
+    --ok:         #34d399;
+    --ok-lo:      rgba(52,211,153,0.09);
+    --err:        #f87171;
+    --err-lo:     rgba(248,113,113,0.09);
+
+    /* Easing — Emil-style custom curves */
+    --ease-out:   cubic-bezier(0.23,1,0.32,1);
+    --ease-inout: cubic-bezier(0.77,0,0.175,1);
+    --ease-snap:  cubic-bezier(0.34,1.56,0.64,1); /* slight overshoot */
+
+    /* Spacing — 20% vertical reduction */
+    --gap:        10px;
+    --pad:        14px;
+    --r:          14px;
+  }
+
+  /* ─── Body & canvas ──────────────────────────────────── */
+  body {
+    background: var(--ink);
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    font-weight: 300;
+    min-height: 100svh;
+    overflow-x: hidden;
+  }
+
+  /* Layered background — deep space noise + gold gradient */
+  body::before {
+    content: '';
+    position: fixed; inset: 0; z-index: 0;
+    background:
+      radial-gradient(ellipse 90% 55% at 50% -5%,  rgba(232,168,48,0.07) 0%, transparent 65%),
+      radial-gradient(ellipse 60% 40% at 90%  80%,  rgba(100,120,200,0.04) 0%, transparent 60%),
+      radial-gradient(ellipse 50% 30% at  5%  60%,  rgba(232,168,48,0.03) 0%, transparent 60%);
+    pointer-events: none;
+  }
+
+  /* Subtle grid overlay */
+  body::after {
+    content: '';
+    position: fixed; inset: 0; z-index: 0;
+    background-image:
+      linear-gradient(rgba(255,255,255,0.018) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255,255,255,0.018) 1px, transparent 1px);
+    background-size: 36px 36px;
+    pointer-events: none;
+  }
+
+  /* ─── Layout ─────────────────────────────────────────── */
+  .app {
+    position: relative; z-index: 1;
+    max-width: 400px;
+    margin: 0 auto;
+    padding: 0 14px 36px;
+    display: flex; flex-direction: column;
+    min-height: 100svh;
+  }
+
+  /* ─── Header ─────────────────────────────────────────── */
+  header {
+    padding: 28px 0 18px;
+    border-bottom: 1px solid var(--rim);
+    margin-bottom: 16px;
+    animation: revealDown 500ms var(--ease-out) both;
+  }
+
+  .h-eyebrow {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 9px; font-weight: 500;
+    letter-spacing: 2.8px; text-transform: uppercase;
+    color: var(--gold);
+    margin-bottom: 6px;
+    opacity: 0.85;
+  }
+
+  .h-title {
+    font-family: 'Instrument Serif', serif;
+    font-size: 22px; font-weight: 400;
+    line-height: 1.15;
+    color: #e8edf8;
+    letter-spacing: -0.3px;
+  }
+
+  .h-sub {
+    font-size: 11px; font-weight: 300;
+    color: var(--text-lo);
+    margin-top: 5px;
+    letter-spacing: 0.3px;
+  }
+
+  /* ─── Status pill ────────────────────────────────────── */
+  #toast {
+    display: flex; align-items: center; gap: 9px;
+    background: var(--glass);
+    border: 1px solid var(--rim);
+    backdrop-filter: blur(12px);
+    border-radius: 10px;
+    padding: 10px 13px;
+    font-size: 12.5px; font-weight: 400;
+    color: var(--text-lo);
+    margin-bottom: 14px;
+    min-height: 40px;
+    transition:
+      background 240ms var(--ease-out),
+      border-color 240ms var(--ease-out),
+      color 240ms var(--ease-out);
+    animation: revealDown 500ms 50ms var(--ease-out) both;
+  }
+
+  #toast.ok   { background: var(--ok-lo);   border-color: rgba(52,211,153,0.3);  color: var(--ok); }
+  #toast.err  { background: var(--err-lo);  border-color: rgba(248,113,113,0.3); color: var(--err); }
+  #toast.load { background: var(--gold-lo); border-color: var(--gold-md);        color: var(--gold); }
+
+  .pulse-dot {
+    width: 6px; height: 6px; border-radius: 50%;
+    background: currentColor; flex-shrink: 0;
+  }
+
+  #toast.ok .pulse-dot,
+  #toast.load .pulse-dot {
+    animation: pulse 1.8s ease-in-out infinite;
+  }
+
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.25} }
+
+  /* ─── Section label ──────────────────────────────────── */
+  .label {
+    display: flex; align-items: center; gap: 8px;
+    font-size: 9.5px; font-weight: 500;
+    letter-spacing: 1.8px; text-transform: uppercase;
+    color: var(--gold);
+    margin-bottom: 7px;
+    opacity: 0.9;
+  }
+
+  .label-num {
+    width: 18px; height: 18px;
+    border: 1px solid var(--gold-md);
+    border-radius: 5px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 9px; color: var(--gold);
+    background: var(--gold-lo);
+  }
+
+  /* ─── Cards ──────────────────────────────────────────── */
+  .card {
+    background: var(--glass);
+    border: 1px solid var(--rim);
+    border-radius: var(--r);
+    padding: var(--pad);
+    margin-bottom: var(--gap);
+    backdrop-filter: blur(8px);
+    transition: border-color 200ms var(--ease-out);
+    will-change: transform;
+  }
+
+  .card:focus-within { border-color: var(--rim2); }
+
+  /* Stagger enter */
+  .card:nth-of-type(1) { animation: slideUp 420ms 90ms  var(--ease-out) both; }
+  .card:nth-of-type(2) { animation: slideUp 420ms 140ms var(--ease-out) both; }
+  .card:nth-of-type(3) { animation: slideUp 420ms 190ms var(--ease-out) both; }
+  .card:nth-of-type(4) { animation: slideUp 420ms 240ms var(--ease-out) both; }
+
+  /* ─── File zone ──────────────────────────────────────── */
+  .file-zone {
+    border: 1px dashed var(--rim2);
+    border-radius: 11px;
+    padding: 16px 14px;
+    text-align: center;
+    cursor: pointer;
+    position: relative;
+    transition: border-color 200ms var(--ease-out), background 200ms var(--ease-out);
+  }
+
+  .file-zone:hover { border-color: var(--gold); background: var(--gold-lo); }
+  .file-zone:active { transform: scale(0.99); }
+
+  .file-zone input[type=file] {
+    position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%;
+  }
+
+  .fz-icon {
+    font-size: 24px; margin-bottom: 5px;
+    filter: grayscale(0.2);
+  }
+
+  .fz-text {
+    font-size: 12.5px; line-height: 1.5; color: var(--text-lo);
+  }
+
+  .fz-text strong { color: var(--text); font-weight: 400; }
+
+  .file-ok {
+    display: flex; align-items: center; gap: 8px;
+    background: var(--ok-lo);
+    border: 1px solid rgba(52,211,153,0.25);
+    border-radius: 9px;
+    padding: 9px 12px;
+    font-size: 12px; color: var(--ok);
+    margin-top: 9px;
+    animation: slideUp 250ms var(--ease-out) both;
+  }
+
+  /* ─── Select ─────────────────────────────────────────── */
+  select {
+    width: 100%;
+    background: var(--glass2);
+    border: 1px solid var(--rim);
+    border-radius: 10px;
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px; font-weight: 300;
+    padding: 11px 38px 11px 13px;
+    appearance: none; -webkit-appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg width='11' height='7' viewBox='0 0 11 7' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1l4.5 5L10 1' stroke='%235a6a8a' stroke-width='1.4' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 13px center;
+    cursor: pointer;
+    transition: border-color 180ms var(--ease-out);
+  }
+
+  select:focus { outline: none; border-color: var(--gold-md); }
+  select:disabled { opacity: 0.35; cursor: not-allowed; }
+  select option { background: #0d1225; }
+
+  /* ─── Visita toggles ─────────────────────────────────── */
+  .toggle-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+
+  .tog {
+    background: var(--glass2);
+    border: 1px solid var(--rim);
+    border-radius: 10px;
+    color: var(--text-lo);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13px; font-weight: 400;
+    padding: 13px 10px;
+    cursor: pointer;
+    text-align: center;
+    transition:
+      border-color 170ms var(--ease-out),
+      color 170ms var(--ease-out),
+      background 170ms var(--ease-out),
+      transform 120ms var(--ease-snap);
+    user-select: none;
+  }
+
+  .tog:active { transform: scale(0.96); }
+
+  .tog.on {
+    border-color: var(--gold-md);
+    background: var(--gold-lo);
+    color: var(--gold-hi);
+  }
+
+  /* ─── GPS readout ────────────────────────────────────── */
+  .gps-box {
+    background: var(--glass2);
+    border: 1px solid var(--rim);
+    border-radius: 10px;
+    padding: 10px 13px;
+    font-size: 12px;
+    font-family: 'Courier New', monospace;
+    color: var(--text-lo);
+    margin-bottom: 9px;
+    min-height: 40px;
+    display: flex; align-items: center; gap: 8px;
+    word-break: break-all;
+    transition:
+      border-color 220ms var(--ease-out),
+      color 220ms var(--ease-out),
+      background 220ms var(--ease-out);
+  }
+
+  .gps-box.captured {
+    color: var(--ok);
+    border-color: rgba(52,211,153,0.3);
+    background: var(--ok-lo);
+  }
+
+  /* ─── Ghost button ───────────────────────────────────── */
+  .btn-ghost {
+    width: 100%;
+    background: var(--glass);
+    border: 1px solid var(--rim);
+    border-radius: 10px;
+    color: var(--text-lo);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13px; font-weight: 400;
+    padding: 12px;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center; gap: 7px;
+    transition:
+      border-color 170ms var(--ease-out),
+      color 170ms var(--ease-out),
+      transform 120ms var(--ease-snap);
+    user-select: none;
+  }
+
+  @media (hover: hover) and (pointer: fine) {
+    .btn-ghost:hover { border-color: var(--rim2); color: var(--text); }
+  }
+
+  .btn-ghost:active { transform: scale(0.97); }
+  .btn-ghost:disabled { opacity: 0.3; cursor: not-allowed; transform: none; }
+
+  /* ─── Primary CTA ────────────────────────────────────── */
+  .btn-primary {
+    width: 100%;
+    position: relative; overflow: hidden;
+    background: linear-gradient(135deg, #e8a830 0%, #c47a15 100%);
+    border: none;
+    border-radius: 12px;
+    color: #080c1a;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px; font-weight: 500;
+    letter-spacing: 0.3px;
+    padding: 16px;
+    cursor: pointer;
+    margin-bottom: 8px;
+    transition:
+      transform 150ms var(--ease-snap),
+      box-shadow 150ms var(--ease-out),
+      opacity 150ms;
+    animation: slideUp 420ms 290ms var(--ease-out) both;
+    user-select: none;
+  }
+
+  /* Shimmer layer */
+  .btn-primary::before {
+    content: '';
+    position: absolute; top: 0; left: -100%;
+    width: 60%; height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.22), transparent);
+    transform: skewX(-20deg);
+    transition: left 0ms;
+  }
+
+  .btn-primary:not(:disabled):hover::before {
+    left: 160%;
+    transition: left 550ms var(--ease-out);
+  }
+
+  @media (hover: hover) and (pointer: fine) {
+    .btn-primary:not(:disabled):hover {
+      transform: translateY(-1px);
+      box-shadow: 0 8px 28px rgba(232,168,48,0.38);
+    }
+  }
+
+  .btn-primary:active:not(:disabled) { transform: scale(0.975); box-shadow: none; }
+  .btn-primary:disabled { opacity: 0.35; cursor: not-allowed; }
+
+  /* ─── Download link ──────────────────────────────────── */
+  .btn-link {
+    width: 100%;
+    background: transparent;
+    border: 1px solid var(--rim);
+    border-radius: 10px;
+    color: var(--text-lo);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 12px; font-weight: 300;
+    padding: 11px;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center; gap: 6px;
+    transition: border-color 170ms var(--ease-out), color 170ms;
+    animation: slideUp 420ms 320ms var(--ease-out) both;
+    user-select: none;
+  }
+
+  @media (hover: hover) and (pointer: fine) {
+    .btn-link:hover { border-color: var(--gold-md); color: var(--gold); }
+  }
+
+  .btn-link:disabled { opacity: 0.25; cursor: not-allowed; }
+
+  /* ─── History list ───────────────────────────────────── */
+  .hist-wrap {
+    margin-top: 4px;
+    animation: slideUp 350ms var(--ease-out) both;
+  }
+
+  .hist-row {
+    background: var(--glass);
+    border: 1px solid var(--rim);
+    border-radius: 10px;
+    padding: 9px 12px;
+    font-size: 12px;
+    margin-bottom: 7px;
+    animation: slideUp 220ms var(--ease-out) both;
+    transition: border-color 180ms;
+  }
+
+  .hist-row:hover { border-color: var(--rim2); }
+
+  .hist-name { font-weight: 400; color: var(--text); margin-bottom: 3px; }
+
+  .hist-meta {
+    font-size: 11px; color: var(--text-lo);
+    display: flex; align-items: center; gap: 7px; flex-wrap: wrap;
+  }
+
+  .badge {
+    font-size: 10px; font-weight: 500;
+    padding: 2px 7px;
+    border-radius: 4px;
+    background: var(--gold-lo);
+    color: var(--gold);
+    border: 1px solid var(--gold-md);
+    letter-spacing: 0.3px;
+  }
+
+  /* ─── Spinner ────────────────────────────────────────── */
+  .spin {
+    width: 14px; height: 14px;
+    border: 1.5px solid rgba(8,12,26,0.3);
+    border-top-color: #080c1a;
+    border-radius: 50%;
+    animation: rotate 0.6s linear infinite;
+    display: inline-block; flex-shrink: 0;
+  }
+
+  /* ─── Footer ─────────────────────────────────────────── */
+  footer {
+    margin-top: auto; padding-top: 22px;
+    text-align: center;
+    font-size: 10px; font-weight: 300;
+    color: var(--text-lo);
+    opacity: 0.45;
+    letter-spacing: 0.5px;
+    animation: slideUp 420ms 360ms var(--ease-out) both;
+  }
+
+  /* ─── Divider ────────────────────────────────────────── */
+  .divider {
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--rim2) 40%, var(--rim2) 60%, transparent);
+    margin: 12px 0;
+  }
+
+  /* ─── Keyframes ──────────────────────────────────────── */
+  @keyframes slideUp {
+    from { opacity: 0; transform: translateY(12px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  @keyframes revealDown {
+    from { opacity: 0; transform: translateY(-8px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  @keyframes rotate { to { transform: rotate(360deg); } }
+
+  @keyframes shimmerIn {
+    from { opacity: 0; transform: scaleX(0.94); }
+    to   { opacity: 1; transform: scaleX(1); }
+  }
+
+  /* Reduced motion */
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      animation-duration: 1ms !important;
+      transition-duration: 50ms !important;
+    }
+  }
+  </style>
+</head>
+<body>
+<div class="app">
+
+  <!-- ── Header ───────────────────────────────────────── -->
+  <header>
+    <div class="h-eyebrow">Sistema de Registro</div>
+    <div class="h-title">Ubicacion de Punto de Venta</div>
+    <div class="h-sub">Registro de visitas</div>
+  </header>
+
+  <!-- ── Toast ────────────────────────────────────────── -->
+  <div id="toast"><div class="pulse-dot"></div><span id="toastMsg">Carga el archivo Excel para comenzar</span></div>
+
+  <!-- ── Card 0: Archivo Excel ────────────────────────── -->
+  <div class="card">
+    <div class="label">📂 Archivo Excel</div>
+
+    <div class="file-zone" id="fileZone">
+      <input type="file" id="fileInput" accept=".xlsx,.xls" onchange="cargarExcel(event)"/>
+      <div class="fz-icon">📊</div>
+      <div class="fz-text"><strong>Selecciona ubicacion.xlsx</strong><br>Toca aquí para buscar el archivo</div>
+    </div>
+
+    <div class="file-ok" id="fileOk" style="display:none">
+      ✓ <span id="fileInfo">—</span>
+    </div>
+  </div>
+
+  <!-- ── Card 1: Cliente ───────────────────────────────── -->
+  <div class="card">
+    <div class="label"><span class="label-num">1</span> Nombre Cliente</div>
+    <select id="selCliente" disabled onchange="checkForm()">
+      <option value="">— Selecciona un cliente —</option>
+    </select>
+  </div>
+
+  <!-- ── Card 2: Visita ────────────────────────────────── -->
+  <div class="card">
+    <div class="label"><span class="label-num">2</span> Visita al Cliente</div>
+    <div class="toggle-row">
+      <button class="tog" data-val="Semanal"   onclick="elegirVisita(this)">📅 Semanal</button>
+      <button class="tog" data-val="Quincenal" onclick="elegirVisita(this)">🗓 Quincenal</button>
+    </div>
+  </div>
+
+  <!-- ── Card 3: GPS ───────────────────────────────────── -->
+  <div class="card">
+    <div class="label"><span class="label-num">3</span> Ubicación GPS</div>
+    <div class="gps-box" id="gpsBox">
+      <span style="flex-shrink:0">📍</span>
+      <span id="gpsTxt">Sin capturar</span>
+    </div>
+    <button class="btn-ghost" id="btnGps" onclick="capturarGPS()">
+      <span>📡</span> Capturar ubicación actual
+    </button>
+  </div>
+
+  <!-- ── Guardar ───────────────────────────────────────── -->
+  <button class="btn-primary" id="btnGuardar" onclick="guardar()" disabled>
+    Guardar y descargar Excel
+  </button>
+
+  <button class="btn-link" id="btnDl" onclick="descargar()" disabled>
+    ↓ Descargar Excel sin cambios
+  </button>
+
+  <!-- ── Historial ─────────────────────────────────────── -->
+  <div class="hist-wrap" id="histWrap" style="display:none">
+    <div class="divider"></div>
+    <div class="label">Guardados esta sesión</div>
+    <div id="histList"></div>
+  </div>
+
+  <!-- ── Footer ───────────────────────────────────────── -->
+  <footer>Por Roberto Fierro A.</footer>
+</div>
+
+<!-- ──────────────────────────────────────────────────── -->
+<script>
+/* ═══ Estado ════════════════════════════════════════════ */
+let wb        = null;
+let filas     = [];
+let visitaSel = '';
+let gpsVal    = '';
+let hist      = [];
+
+/* ═══ Toast ═════════════════════════════════════════════ */
+function toast(msg, tipo = '') {
+  const el = document.getElementById('toast');
+  el.className = tipo;
+  document.getElementById('toastMsg').textContent = msg;
+}
+
+/* ═══ 0 · Cargar Excel ══════════════════════════════════ */
+function cargarExcel(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  toast('Leyendo archivo…', 'load');
+
+  const reader = new FileReader();
+  reader.onload = ev => {
+    try {
+      wb = XLSX.read(ev.target.result, { type: 'array' });
+      const ws = wb.Sheets[wb.SheetNames[0]];
+      filas = XLSX.utils.sheet_to_json(ws, { defval: '' });
+
+      const sel = document.getElementById('selCliente');
+      sel.innerHTML = '<option value="">— Selecciona un cliente —</option>';
+      filas.forEach((f, i) => {
+        const opt = document.createElement('option');
+        opt.value = i;
+        opt.textContent = f['Nombre Cliente'] || `Fila ${i + 1}`;
+        sel.appendChild(opt);
+      });
+      sel.disabled = false;
+
+      document.getElementById('fileOk').style.display = 'flex';
+      document.getElementById('fileInfo').textContent = `${file.name} · ${filas.length} clientes`;
+      document.getElementById('fileZone').style.display = 'none';
+      document.getElementById('btnDl').disabled = false;
+
+      toast(`✓ ${filas.length} clientes cargados`, 'ok');
+      setTimeout(() => toast('Completa los 3 pasos'), 2400);
+    } catch {
+      toast('No se pudo leer el archivo Excel', 'err');
+    }
+  };
+  reader.readAsArrayBuffer(file);
+}
+
+/* ═══ 2 · Visita ════════════════════════════════════════ */
+function elegirVisita(btn) {
+  document.querySelectorAll('.tog').forEach(b => b.classList.remove('on'));
+  btn.classList.add('on');
+  visitaSel = btn.dataset.val;
+  checkForm();
+}
+
+/* ═══ 3 · GPS ═══════════════════════════════════════════ */
+function capturarGPS() {
+  if (!navigator.geolocation) {
+    toast('GPS no disponible en este navegador', 'err');
+    return;
+  }
+
+  const btn = document.getElementById('btnGps');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spin"></span> Obteniendo posición…';
+  toast('Obteniendo ubicación GPS…', 'load');
+
+  navigator.geolocation.getCurrentPosition(
+    pos => {
+      const lat = pos.coords.latitude.toFixed(6);
+      const lng = pos.coords.longitude.toFixed(6);
+      gpsVal = `${lat},${lng}`;
+
+      document.getElementById('gpsTxt').textContent = gpsVal;
+      document.getElementById('gpsBox').classList.add('captured');
+
+      btn.disabled = false;
+      btn.innerHTML = '<span>🔄</span> Recapturar ubicación';
+      toast('Ubicación capturada', 'ok');
+      checkForm();
+    },
+    err => {
+      btn.disabled = false;
+      btn.innerHTML = '<span>📡</span> Capturar ubicación actual';
+      const m = {
+        1: 'Permiso denegado — activa ubicación en ajustes',
+        2: 'No se pudo determinar la posición',
+        3: 'Tiempo agotado — intenta de nuevo',
+      };
+      toast(m[err.code] || 'Error al obtener GPS', 'err');
+    },
+    { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 }
+  );
+}
+
+/* ═══ Validar ═══════════════════════════════════════════ */
+function checkForm() {
+  const idx = document.getElementById('selCliente').value;
+  document.getElementById('btnGuardar').disabled =
+    !(idx !== '' && visitaSel && gpsVal && wb);
+}
+
+/* ═══ Guardar ═══════════════════════════════════════════ */
+function guardar() {
+  const idx = parseInt(document.getElementById('selCliente').value);
+  if (isNaN(idx)) return;
+
+  filas[idx]['Visita al Cliente'] = visitaSel;
+  filas[idx]['Ubicacion']         = gpsVal;
+
+  const nombreCliente = filas[idx]['Nombre Cliente'];
+
+  // Actualizar workbook en memoria
+  wb.Sheets[wb.SheetNames[0]] = XLSX.utils.json_to_sheet(filas);
+
+  // Historial visual
+  hist.unshift({ n: nombreCliente, v: visitaSel, g: gpsVal });
+  renderHist();
+
+  // Descargar
+  descargar();
+
+  // Feedback de éxito
+  const btn = document.getElementById('btnGuardar');
+  const orig = btn.textContent;
+  btn.textContent = '✓ Guardado';
+  setTimeout(() => { btn.textContent = orig; }, 1600);
+
+  // Reset
+  visitaSel = ''; gpsVal = '';
+  document.querySelectorAll('.tog').forEach(b => b.classList.remove('on'));
+  document.getElementById('gpsTxt').textContent = 'Sin capturar';
+  document.getElementById('gpsBox').classList.remove('captured');
+  document.getElementById('selCliente').value = '';
+  document.getElementById('btnGps').innerHTML = '<span>📡</span> Capturar ubicación actual';
+  checkForm();
+
+  toast(`Guardado: ${nombreCliente}`, 'ok');
+  setTimeout(() => toast('Comparte el Excel por WhatsApp o correo'), 2200);
+}
+
+/* ═══ Descargar ═════════════════════════════════════════ */
+function descargar() {
+  if (!wb) return;
+  XLSX.writeFile(wb, 'ubicacion.xlsx');
+}
+
+/* ═══ Historial ═════════════════════════════════════════ */
+function renderHist() {
+  const wrap = document.getElementById('histWrap');
+  const list = document.getElementById('histList');
+  wrap.style.display = '';
+  list.innerHTML = '';
+  hist.slice(0, 8).forEach(h => {
+    const el = document.createElement('div');
+    el.className = 'hist-row';
+    el.innerHTML = `
+      <div class="hist-name">${h.n}</div>
+      <div class="hist-meta">
+        <span class="badge">${h.v}</span>
+        <span>📍 ${h.g}</span>
+      </div>`;
+    list.appendChild(el);
+  });
+}
+
+/* ═══ Service Worker ════════════════════════════════════ */
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('./sw.js')
+      .then(() => console.log('SW registrado'))
+      .catch(e => console.warn('SW error:', e));
+  });
+}
+</script>
+</body>
+</html>
