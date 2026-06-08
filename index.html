@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no"/>
-  <meta name="theme-color" content="#080c1a"/>
+  <meta name="theme-color" content="#060a16"/>
   <meta name="apple-mobile-web-app-capable" content="yes"/>
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
   <meta name="apple-mobile-web-app-title" content="PdV Visitas"/>
@@ -16,42 +16,58 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 
   <style>
-  /* ─── Reset ─────────────────────────────────────────── */
-  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+  /* ─── Reset ──────────────────────────────────────────── */
+  *, *::before, *::after {
+    box-sizing: border-box; margin: 0; padding: 0;
+    -webkit-tap-highlight-color: transparent;
+  }
   html { -webkit-text-size-adjust: 100%; }
 
-  /* ─── Tokens ─────────────────────────────────────────── */
+  /* ─── Design Tokens ──────────────────────────────────── */
   :root {
-    /* Palette — deep mineral with amber-gold accent */
-    --ink:        #080c1a;
-    --ink2:       #0d1225;
-    --glass:      rgba(255,255,255,0.032);
-    --glass2:     rgba(255,255,255,0.06);
-    --rim:        rgba(255,255,255,0.07);
-    --rim2:       rgba(255,255,255,0.13);
-    --gold:       #e8a830;
-    --gold-hi:    #f5c252;
-    --gold-lo:    rgba(232,168,48,0.10);
-    --gold-md:    rgba(232,168,48,0.22);
-    --text:       #c8d4ee;
-    --text-lo:    #5a6a8a;
-    --ok:         #34d399;
-    --ok-lo:      rgba(52,211,153,0.09);
-    --err:        #f87171;
-    --err-lo:     rgba(248,113,113,0.09);
+    /* Palette — deep obsidian + aurora gold */
+    --ink:         #060a16;
+    --ink2:        #0b1020;
+    --ink3:        #101628;
+    --glass:       rgba(255,255,255,0.028);
+    --glass2:      rgba(255,255,255,0.055);
+    --glass3:      rgba(255,255,255,0.09);
+    --rim:         rgba(255,255,255,0.065);
+    --rim2:        rgba(255,255,255,0.12);
+    --rim3:        rgba(255,255,255,0.18);
 
-    /* Easing — Emil-style custom curves */
-    --ease-out:   cubic-bezier(0.23,1,0.32,1);
-    --ease-inout: cubic-bezier(0.77,0,0.175,1);
-    --ease-snap:  cubic-bezier(0.34,1.56,0.64,1); /* slight overshoot */
+    /* Gold spectrum */
+    --gold:        #dca020;
+    --gold-hi:     #f0be50;
+    --gold-lo:     rgba(220,160,32,0.09);
+    --gold-md:     rgba(220,160,32,0.20);
+    --gold-glow:   rgba(220,160,32,0.30);
 
-    /* Spacing — 20% vertical reduction */
-    --gap:        10px;
-    --pad:        14px;
-    --r:          14px;
+    /* Semantic */
+    --text:        #bfcde8;
+    --text-hi:     #dce8f8;
+    --text-lo:     #4e5e7e;
+    --ok:          #2dd4a4;
+    --ok-lo:       rgba(45,212,164,0.08);
+    --ok-rim:      rgba(45,212,164,0.28);
+    --err:         #f07070;
+    --err-lo:      rgba(240,112,112,0.08);
+    --err-rim:     rgba(240,112,112,0.28);
+
+    /* Easing — exponential out + snap */
+    --ease-out:    cubic-bezier(0.16,1,0.3,1);
+    --ease-inout:  cubic-bezier(0.77,0,0.175,1);
+    --ease-snap:   cubic-bezier(0.34,1.48,0.64,1);
+    --ease-swift:  cubic-bezier(0.23,1,0.32,1);
+
+    /* Spacing */
+    --gap:   9px;
+    --pad:   14px;
+    --r:     14px;
+    --r-sm:  10px;
   }
 
-  /* ─── Body & canvas ──────────────────────────────────── */
+  /* ─── Body ───────────────────────────────────────────── */
   body {
     background: var(--ink);
     color: var(--text);
@@ -61,122 +77,137 @@
     overflow-x: hidden;
   }
 
-  /* Layered background — deep space noise + gold gradient */
+  /* Aurora background layers */
   body::before {
     content: '';
-    position: fixed; inset: 0; z-index: 0;
+    position: fixed; inset: 0; z-index: 0; pointer-events: none;
     background:
-      radial-gradient(ellipse 90% 55% at 50% -5%,  rgba(232,168,48,0.07) 0%, transparent 65%),
-      radial-gradient(ellipse 60% 40% at 90%  80%,  rgba(100,120,200,0.04) 0%, transparent 60%),
-      radial-gradient(ellipse 50% 30% at  5%  60%,  rgba(232,168,48,0.03) 0%, transparent 60%);
-    pointer-events: none;
+      radial-gradient(ellipse 100% 50% at 50% -8%,  rgba(220,160,32,0.085) 0%, transparent 60%),
+      radial-gradient(ellipse  55% 35% at 92%  85%,  rgba(80,100,200,0.05)  0%, transparent 55%),
+      radial-gradient(ellipse  45% 28% at  4%  65%,  rgba(220,160,32,0.04)  0%, transparent 55%),
+      radial-gradient(ellipse  70% 40% at 50% 110%,  rgba(40,180,140,0.03)  0%, transparent 60%);
   }
 
-  /* Subtle grid overlay */
+  /* Dot grid */
   body::after {
     content: '';
-    position: fixed; inset: 0; z-index: 0;
-    background-image:
-      linear-gradient(rgba(255,255,255,0.018) 1px, transparent 1px),
-      linear-gradient(90deg, rgba(255,255,255,0.018) 1px, transparent 1px);
-    background-size: 36px 36px;
-    pointer-events: none;
+    position: fixed; inset: 0; z-index: 0; pointer-events: none;
+    background-image: radial-gradient(circle, rgba(255,255,255,0.055) 1px, transparent 1px);
+    background-size: 28px 28px;
+    mask-image: radial-gradient(ellipse 80% 70% at 50% 50%, black, transparent);
   }
 
-  /* ─── Layout ─────────────────────────────────────────── */
+  /* ─── App shell ──────────────────────────────────────── */
   .app {
     position: relative; z-index: 1;
     max-width: 400px;
     margin: 0 auto;
-    padding: 0 14px 36px;
+    padding: 0 14px 40px;
     display: flex; flex-direction: column;
     min-height: 100svh;
   }
 
   /* ─── Header ─────────────────────────────────────────── */
   header {
-    padding: 28px 0 18px;
+    padding: 26px 0 16px;
+    text-align: center;
     border-bottom: 1px solid var(--rim);
-    margin-bottom: 16px;
-    animation: revealDown 500ms var(--ease-out) both;
+    margin-bottom: 14px;
+    animation: revealDown 550ms var(--ease-out) both;
   }
 
   .h-eyebrow {
-    font-family: 'DM Sans', sans-serif;
-    font-size: 9px; font-weight: 500;
-    letter-spacing: 2.8px; text-transform: uppercase;
+    font-size: 9.5px; font-weight: 500;
+    letter-spacing: 3px; text-transform: uppercase;
     color: var(--gold);
-    margin-bottom: 6px;
-    opacity: 0.85;
+    margin-bottom: 7px;
+    opacity: 0.88;
+    animation: revealDown 550ms 30ms var(--ease-out) both;
   }
 
   .h-title {
     font-family: 'Instrument Serif', serif;
-    font-size: 22px; font-weight: 400;
-    line-height: 1.15;
-    color: #e8edf8;
-    letter-spacing: -0.3px;
+    font-size: 26px; font-weight: 400;
+    line-height: 1.12;
+    color: var(--text-hi);
+    letter-spacing: -0.2px;
+    text-wrap: balance;
+    /* Gold shimmer on the title */
+    background: linear-gradient(135deg, #e8d8a8 0%, #dca020 45%, #f0d070 70%, #c08010 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    animation: revealDown 550ms 60ms var(--ease-out) both;
   }
 
   .h-sub {
-    font-size: 11px; font-weight: 300;
+    font-size: 13px; font-weight: 300;
     color: var(--text-lo);
-    margin-top: 5px;
-    letter-spacing: 0.3px;
+    margin-top: 6px;
+    letter-spacing: 0.5px;
+    animation: revealDown 550ms 90ms var(--ease-out) both;
   }
 
-  /* ─── Status pill ────────────────────────────────────── */
+  /* ─── Thin gold rule under header ───────────────────── */
+  .gold-line {
+    width: 36px; height: 1.5px;
+    background: linear-gradient(90deg, transparent, var(--gold), transparent);
+    margin: 0 auto 0;
+    border-radius: 2px;
+    opacity: 0.5;
+  }
+
+  /* ─── Toast ──────────────────────────────────────────── */
   #toast {
     display: flex; align-items: center; gap: 9px;
     background: var(--glass);
     border: 1px solid var(--rim);
-    backdrop-filter: blur(12px);
-    border-radius: 10px;
-    padding: 10px 13px;
+    backdrop-filter: blur(16px) saturate(1.4);
+    -webkit-backdrop-filter: blur(16px) saturate(1.4);
+    border-radius: var(--r-sm);
+    padding: 9px 13px;
     font-size: 12.5px; font-weight: 400;
     color: var(--text-lo);
-    margin-bottom: 14px;
-    min-height: 40px;
+    margin-bottom: 12px;
+    min-height: 38px;
     transition:
-      background 240ms var(--ease-out),
-      border-color 240ms var(--ease-out),
-      color 240ms var(--ease-out);
-    animation: revealDown 500ms 50ms var(--ease-out) both;
+      background 260ms var(--ease-out),
+      border-color 260ms var(--ease-out),
+      color 260ms var(--ease-out);
+    animation: slideUp 500ms 110ms var(--ease-out) both;
   }
 
-  #toast.ok   { background: var(--ok-lo);   border-color: rgba(52,211,153,0.3);  color: var(--ok); }
-  #toast.err  { background: var(--err-lo);  border-color: rgba(248,113,113,0.3); color: var(--err); }
-  #toast.load { background: var(--gold-lo); border-color: var(--gold-md);        color: var(--gold); }
+  #toast.ok   { background: var(--ok-lo);  border-color: var(--ok-rim);  color: var(--ok); }
+  #toast.err  { background: var(--err-lo); border-color: var(--err-rim); color: var(--err); }
+  #toast.load { background: var(--gold-lo); border-color: var(--gold-md); color: var(--gold); }
 
   .pulse-dot {
     width: 6px; height: 6px; border-radius: 50%;
     background: currentColor; flex-shrink: 0;
   }
-
-  #toast.ok .pulse-dot,
-  #toast.load .pulse-dot {
-    animation: pulse 1.8s ease-in-out infinite;
+  #toast.ok .pulse-dot, #toast.load .pulse-dot {
+    animation: pulseDot 1.8s ease-in-out infinite;
   }
-
-  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.25} }
+  @keyframes pulseDot { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:.25;transform:scale(0.7)} }
 
   /* ─── Section label ──────────────────────────────────── */
   .label {
-    display: flex; align-items: center; gap: 8px;
-    font-size: 9.5px; font-weight: 500;
-    letter-spacing: 1.8px; text-transform: uppercase;
+    display: flex; align-items: center; gap: 7px;
+    font-size: 9px; font-weight: 500;
+    letter-spacing: 1.9px; text-transform: uppercase;
     color: var(--gold);
     margin-bottom: 7px;
-    opacity: 0.9;
+    opacity: 0.88;
   }
 
   .label-num {
-    width: 18px; height: 18px;
+    width: 17px; height: 17px;
     border: 1px solid var(--gold-md);
     border-radius: 5px;
     display: flex; align-items: center; justify-content: center;
-    font-size: 9px; color: var(--gold);
+    font-size: 8.5px; color: var(--gold);
     background: var(--gold-lo);
+    flex-shrink: 0;
   }
 
   /* ─── Cards ──────────────────────────────────────────── */
@@ -186,57 +217,68 @@
     border-radius: var(--r);
     padding: var(--pad);
     margin-bottom: var(--gap);
-    backdrop-filter: blur(8px);
-    transition: border-color 200ms var(--ease-out);
+    backdrop-filter: blur(10px) saturate(1.2);
+    -webkit-backdrop-filter: blur(10px) saturate(1.2);
+    transition:
+      border-color 200ms var(--ease-out),
+      box-shadow 200ms var(--ease-out);
     will-change: transform;
+    position: relative;
+    overflow: hidden;
   }
 
-  .card:focus-within { border-color: var(--rim2); }
+  /* Subtle inner highlight top edge */
+  .card::before {
+    content: '';
+    position: absolute; top: 0; left: 10%; right: 10%;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.10), transparent);
+    pointer-events: none;
+  }
 
-  /* Stagger enter */
-  .card:nth-of-type(1) { animation: slideUp 420ms 90ms  var(--ease-out) both; }
-  .card:nth-of-type(2) { animation: slideUp 420ms 140ms var(--ease-out) both; }
-  .card:nth-of-type(3) { animation: slideUp 420ms 190ms var(--ease-out) both; }
-  .card:nth-of-type(4) { animation: slideUp 420ms 240ms var(--ease-out) both; }
+  .card:focus-within {
+    border-color: var(--gold-md);
+    box-shadow: 0 0 0 1px var(--gold-md) inset, 0 4px 24px rgba(0,0,0,0.3);
+  }
+
+  /* Stagger entrance */
+  .card:nth-of-type(1) { animation: slideUp 450ms 120ms var(--ease-out) both; }
+  .card:nth-of-type(2) { animation: slideUp 450ms 165ms var(--ease-out) both; }
+  .card:nth-of-type(3) { animation: slideUp 450ms 210ms var(--ease-out) both; }
+  .card:nth-of-type(4) { animation: slideUp 450ms 255ms var(--ease-out) both; }
 
   /* ─── File zone ──────────────────────────────────────── */
   .file-zone {
     border: 1px dashed var(--rim2);
-    border-radius: 11px;
+    border-radius: var(--r-sm);
     padding: 16px 14px;
     text-align: center;
     cursor: pointer;
     position: relative;
-    transition: border-color 200ms var(--ease-out), background 200ms var(--ease-out);
+    transition:
+      border-color 200ms var(--ease-out),
+      background 200ms var(--ease-out),
+      transform 120ms var(--ease-snap);
   }
 
-  .file-zone:hover { border-color: var(--gold); background: var(--gold-lo); }
-  .file-zone:active { transform: scale(0.99); }
+  .file-zone:hover  { border-color: var(--gold); background: var(--gold-lo); }
+  .file-zone:active { transform: scale(0.985); }
 
   .file-zone input[type=file] {
     position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%;
   }
 
-  .fz-icon {
-    font-size: 24px; margin-bottom: 5px;
-    filter: grayscale(0.2);
-  }
-
-  .fz-text {
-    font-size: 12.5px; line-height: 1.5; color: var(--text-lo);
-  }
-
+  .fz-icon { font-size: 22px; margin-bottom: 5px; }
+  .fz-text { font-size: 12.5px; line-height: 1.5; color: var(--text-lo); }
   .fz-text strong { color: var(--text); font-weight: 400; }
 
   .file-ok {
     display: flex; align-items: center; gap: 8px;
-    background: var(--ok-lo);
-    border: 1px solid rgba(52,211,153,0.25);
-    border-radius: 9px;
-    padding: 9px 12px;
+    background: var(--ok-lo); border: 1px solid var(--ok-rim);
+    border-radius: 9px; padding: 9px 12px;
     font-size: 12px; color: var(--ok);
     margin-top: 9px;
-    animation: slideUp 250ms var(--ease-out) both;
+    animation: slideUp 280ms var(--ease-snap) both;
   }
 
   /* ─── Select ─────────────────────────────────────────── */
@@ -244,75 +286,91 @@
     width: 100%;
     background: var(--glass2);
     border: 1px solid var(--rim);
-    border-radius: 10px;
+    border-radius: var(--r-sm);
     color: var(--text);
     font-family: 'DM Sans', sans-serif;
     font-size: 14px; font-weight: 300;
     padding: 11px 38px 11px 13px;
     appearance: none; -webkit-appearance: none;
-    background-image: url("data:image/svg+xml,%3Csvg width='11' height='7' viewBox='0 0 11 7' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1l4.5 5L10 1' stroke='%235a6a8a' stroke-width='1.4' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+    background-image: url("data:image/svg+xml,%3Csvg width='11' height='7' viewBox='0 0 11 7' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1l4.5 5L10 1' stroke='%234e5e7e' stroke-width='1.4' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
     background-repeat: no-repeat;
     background-position: right 13px center;
     cursor: pointer;
-    transition: border-color 180ms var(--ease-out);
+    transition: border-color 180ms var(--ease-out), box-shadow 180ms var(--ease-out);
   }
 
-  select:focus { outline: none; border-color: var(--gold-md); }
-  select:disabled { opacity: 0.35; cursor: not-allowed; }
-  select option { background: #0d1225; }
+  select:focus {
+    outline: none;
+    border-color: var(--gold-md);
+    box-shadow: 0 0 0 3px var(--gold-lo);
+  }
+  select:disabled { opacity: 0.3; cursor: not-allowed; }
+  select option { background: #0b1020; }
 
-  /* ─── Visita toggles ─────────────────────────────────── */
+  /* ─── Toggle buttons (Semanal/Quincenal) ─────────────── */
   .toggle-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
 
   .tog {
     background: var(--glass2);
     border: 1px solid var(--rim);
-    border-radius: 10px;
+    border-radius: var(--r-sm);
     color: var(--text-lo);
     font-family: 'DM Sans', sans-serif;
     font-size: 13px; font-weight: 400;
     padding: 13px 10px;
-    cursor: pointer;
-    text-align: center;
+    cursor: pointer; text-align: center;
     transition:
-      border-color 170ms var(--ease-out),
-      color 170ms var(--ease-out),
-      background 170ms var(--ease-out),
-      transform 120ms var(--ease-snap);
+      border-color 160ms var(--ease-out),
+      color 160ms var(--ease-out),
+      background 160ms var(--ease-out),
+      transform 130ms var(--ease-snap),
+      box-shadow 160ms var(--ease-out);
     user-select: none;
+    position: relative; overflow: hidden;
   }
 
-  .tog:active { transform: scale(0.96); }
+  /* ripple layer */
+  .tog::after {
+    content: '';
+    position: absolute; inset: 0; border-radius: inherit;
+    background: radial-gradient(circle at 50% 50%, rgba(220,160,32,0.18), transparent 70%);
+    opacity: 0; transition: opacity 200ms var(--ease-out);
+  }
+
+  .tog:active { transform: scale(0.95); }
+  .tog:active::after { opacity: 1; }
 
   .tog.on {
     border-color: var(--gold-md);
     background: var(--gold-lo);
     color: var(--gold-hi);
+    box-shadow: 0 0 14px var(--gold-lo) inset;
   }
 
   /* ─── GPS readout ────────────────────────────────────── */
   .gps-box {
     background: var(--glass2);
     border: 1px solid var(--rim);
-    border-radius: 10px;
+    border-radius: var(--r-sm);
     padding: 10px 13px;
-    font-size: 12px;
-    font-family: 'Courier New', monospace;
+    font-size: 12px; font-family: 'Courier New', monospace;
     color: var(--text-lo);
     margin-bottom: 9px;
     min-height: 40px;
     display: flex; align-items: center; gap: 8px;
     word-break: break-all;
     transition:
-      border-color 220ms var(--ease-out),
-      color 220ms var(--ease-out),
-      background 220ms var(--ease-out);
+      border-color 240ms var(--ease-out),
+      color 240ms var(--ease-out),
+      background 240ms var(--ease-out),
+      box-shadow 240ms var(--ease-out);
   }
 
   .gps-box.captured {
     color: var(--ok);
-    border-color: rgba(52,211,153,0.3);
+    border-color: var(--ok-rim);
     background: var(--ok-lo);
+    box-shadow: 0 0 12px rgba(45,212,164,0.06) inset;
   }
 
   /* ─── Ghost button ───────────────────────────────────── */
@@ -320,16 +378,16 @@
     width: 100%;
     background: var(--glass);
     border: 1px solid var(--rim);
-    border-radius: 10px;
+    border-radius: var(--r-sm);
     color: var(--text-lo);
     font-family: 'DM Sans', sans-serif;
     font-size: 13px; font-weight: 400;
-    padding: 12px;
+    padding: 11px;
     cursor: pointer;
     display: flex; align-items: center; justify-content: center; gap: 7px;
     transition:
-      border-color 170ms var(--ease-out),
-      color 170ms var(--ease-out),
+      border-color 160ms var(--ease-out),
+      color 160ms var(--ease-out),
       transform 120ms var(--ease-snap);
     user-select: none;
   }
@@ -337,163 +395,173 @@
   @media (hover: hover) and (pointer: fine) {
     .btn-ghost:hover { border-color: var(--rim2); color: var(--text); }
   }
-
   .btn-ghost:active { transform: scale(0.97); }
-  .btn-ghost:disabled { opacity: 0.3; cursor: not-allowed; transform: none; }
+  .btn-ghost:disabled { opacity: 0.28; cursor: not-allowed; transform: none; }
 
-  /* ─── Primary CTA ────────────────────────────────────── */
+  /* ─── Action row (2 primary buttons) ────────────────── */
+  .action-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 9px;
+    margin-bottom: 9px;
+    animation: slideUp 450ms 300ms var(--ease-out) both;
+  }
+
+  /* ─── Primary button ─────────────────────────────────── */
   .btn-primary {
-    width: 100%;
     position: relative; overflow: hidden;
-    background: linear-gradient(135deg, #e8a830 0%, #c47a15 100%);
-    border: none;
-    border-radius: 12px;
-    color: #080c1a;
+    background: linear-gradient(145deg, #d9a020 0%, #b07010 100%);
+    border: 1px solid rgba(220,160,32,0.35);
+    border-radius: var(--r-sm);
+    color: #0a0c10;
     font-family: 'DM Sans', sans-serif;
-    font-size: 14px; font-weight: 500;
-    letter-spacing: 0.3px;
-    padding: 16px;
+    font-size: 13px; font-weight: 500;
+    letter-spacing: 0.2px;
+    padding: 14px 12px;
     cursor: pointer;
-    margin-bottom: 8px;
     transition:
-      transform 150ms var(--ease-snap),
-      box-shadow 150ms var(--ease-out),
+      transform 140ms var(--ease-snap),
+      box-shadow 160ms var(--ease-out),
       opacity 150ms;
-    animation: slideUp 420ms 290ms var(--ease-out) both;
     user-select: none;
   }
 
-  /* Shimmer layer */
+  /* shimmer sweep */
   .btn-primary::before {
     content: '';
-    position: absolute; top: 0; left: -100%;
-    width: 60%; height: 100%;
-    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.22), transparent);
-    transform: skewX(-20deg);
-    transition: left 0ms;
+    position: absolute; top: 0; left: -80%;
+    width: 50%; height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.28), transparent);
+    transform: skewX(-18deg);
   }
 
   .btn-primary:not(:disabled):hover::before {
-    left: 160%;
-    transition: left 550ms var(--ease-out);
+    animation: shimmer 500ms var(--ease-out) forwards;
+  }
+
+  @keyframes shimmer {
+    from { left: -80%; }
+    to   { left: 160%; }
   }
 
   @media (hover: hover) and (pointer: fine) {
     .btn-primary:not(:disabled):hover {
       transform: translateY(-1px);
-      box-shadow: 0 8px 28px rgba(232,168,48,0.38);
+      box-shadow: 0 6px 22px rgba(220,160,32,0.35);
     }
   }
+  .btn-primary:active:not(:disabled) { transform: scale(0.965); box-shadow: none; }
+  .btn-primary:disabled { opacity: 0.32; cursor: not-allowed; }
 
-  .btn-primary:active:not(:disabled) { transform: scale(0.975); box-shadow: none; }
-  .btn-primary:disabled { opacity: 0.35; cursor: not-allowed; }
-
-  /* ─── Download link ──────────────────────────────────── */
-  .btn-link {
-    width: 100%;
-    background: transparent;
-    border: 1px solid var(--rim);
-    border-radius: 10px;
-    color: var(--text-lo);
+  /* ─── Secondary button (Descargar) ──────────────────── */
+  .btn-secondary {
+    position: relative; overflow: hidden;
+    background: var(--glass2);
+    border: 1px solid var(--rim2);
+    border-radius: var(--r-sm);
+    color: var(--text);
     font-family: 'DM Sans', sans-serif;
-    font-size: 12px; font-weight: 300;
-    padding: 11px;
+    font-size: 13px; font-weight: 400;
+    padding: 14px 12px;
     cursor: pointer;
-    display: flex; align-items: center; justify-content: center; gap: 6px;
-    transition: border-color 170ms var(--ease-out), color 170ms;
-    animation: slideUp 420ms 320ms var(--ease-out) both;
+    transition:
+      border-color 160ms var(--ease-out),
+      color 160ms var(--ease-out),
+      transform 130ms var(--ease-snap),
+      box-shadow 160ms var(--ease-out);
     user-select: none;
   }
 
   @media (hover: hover) and (pointer: fine) {
-    .btn-link:hover { border-color: var(--gold-md); color: var(--gold); }
+    .btn-secondary:not(:disabled):hover {
+      border-color: var(--gold-md);
+      color: var(--gold-hi);
+      box-shadow: 0 4px 16px rgba(0,0,0,0.25);
+    }
+  }
+  .btn-secondary:active:not(:disabled) { transform: scale(0.965); }
+  .btn-secondary:disabled { opacity: 0.28; cursor: not-allowed; }
+
+  /* ─── History ────────────────────────────────────────── */
+  .hist-wrap {
+    animation: slideUp 350ms var(--ease-out) both;
+    margin-top: 4px;
   }
 
-  .btn-link:disabled { opacity: 0.25; cursor: not-allowed; }
-
-  /* ─── History list ───────────────────────────────────── */
-  .hist-wrap {
-    margin-top: 4px;
-    animation: slideUp 350ms var(--ease-out) both;
+  .divider {
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--rim2) 30%, var(--rim2) 70%, transparent);
+    margin: 12px 0 10px;
   }
 
   .hist-row {
     background: var(--glass);
     border: 1px solid var(--rim);
-    border-radius: 10px;
+    border-radius: var(--r-sm);
     padding: 9px 12px;
-    font-size: 12px;
     margin-bottom: 7px;
     animation: slideUp 220ms var(--ease-out) both;
-    transition: border-color 180ms;
+    transition: border-color 160ms var(--ease-out);
   }
 
-  .hist-row:hover { border-color: var(--rim2); }
-
-  .hist-name { font-weight: 400; color: var(--text); margin-bottom: 3px; }
-
-  .hist-meta {
-    font-size: 11px; color: var(--text-lo);
-    display: flex; align-items: center; gap: 7px; flex-wrap: wrap;
+  @media (hover: hover) and (pointer: fine) {
+    .hist-row:hover { border-color: var(--rim2); }
   }
+
+  .hist-name { font-size: 13px; font-weight: 400; color: var(--text); margin-bottom: 3px; }
+  .hist-meta { font-size: 11px; color: var(--text-lo); display: flex; align-items: center; gap: 7px; flex-wrap: wrap; }
 
   .badge {
-    font-size: 10px; font-weight: 500;
-    padding: 2px 7px;
-    border-radius: 4px;
+    font-size: 9.5px; font-weight: 500; letter-spacing: 0.3px;
+    padding: 2px 7px; border-radius: 4px;
     background: var(--gold-lo);
     color: var(--gold);
     border: 1px solid var(--gold-md);
-    letter-spacing: 0.3px;
   }
 
   /* ─── Spinner ────────────────────────────────────────── */
   .spin {
-    width: 14px; height: 14px;
-    border: 1.5px solid rgba(8,12,26,0.3);
-    border-top-color: #080c1a;
+    width: 13px; height: 13px; flex-shrink: 0;
+    border: 1.5px solid rgba(255,255,255,0.15);
+    border-top-color: currentColor;
     border-radius: 50%;
-    animation: rotate 0.6s linear infinite;
-    display: inline-block; flex-shrink: 0;
+    animation: rotate 0.55s linear infinite;
+    display: inline-block;
   }
 
   /* ─── Footer ─────────────────────────────────────────── */
   footer {
-    margin-top: auto; padding-top: 22px;
+    margin-top: auto; padding-top: 20px;
     text-align: center;
-    font-size: 10px; font-weight: 300;
+    font-size: 10.5px; font-weight: 300;
     color: var(--text-lo);
-    opacity: 0.45;
-    letter-spacing: 0.5px;
-    animation: slideUp 420ms 360ms var(--ease-out) both;
-  }
-
-  /* ─── Divider ────────────────────────────────────────── */
-  .divider {
-    height: 1px;
-    background: linear-gradient(90deg, transparent, var(--rim2) 40%, var(--rim2) 60%, transparent);
-    margin: 12px 0;
+    opacity: 0.42;
+    letter-spacing: 0.4px;
+    animation: slideUp 450ms 360ms var(--ease-out) both;
   }
 
   /* ─── Keyframes ──────────────────────────────────────── */
   @keyframes slideUp {
-    from { opacity: 0; transform: translateY(12px); }
+    from { opacity: 0; transform: translateY(14px); }
     to   { opacity: 1; transform: translateY(0); }
   }
 
   @keyframes revealDown {
-    from { opacity: 0; transform: translateY(-8px); }
+    from { opacity: 0; transform: translateY(-10px); }
     to   { opacity: 1; transform: translateY(0); }
   }
 
   @keyframes rotate { to { transform: rotate(360deg); } }
 
-  @keyframes shimmerIn {
-    from { opacity: 0; transform: scaleX(0.94); }
-    to   { opacity: 1; transform: scaleX(1); }
+  @keyframes successPop {
+    0%   { transform: scale(1); }
+    40%  { transform: scale(1.04); }
+    100% { transform: scale(1); }
   }
 
-  /* Reduced motion */
+  .pop { animation: successPop 350ms var(--ease-snap); }
+
+  /* ─── Reduced motion ─────────────────────────────────── */
   @media (prefers-reduced-motion: reduce) {
     *, *::before, *::after {
       animation-duration: 1ms !important;
@@ -505,11 +573,12 @@
 <body>
 <div class="app">
 
-  <!-- ── Header ───────────────────────────────────────── -->
+  <!-- ── Header (centrado) ────────────────────────────── -->
   <header>
     <div class="h-eyebrow">Sistema de Registro</div>
     <div class="h-title">Ubicacion de Punto de Venta</div>
     <div class="h-sub">Registro de visitas</div>
+    <div class="gold-line" style="margin-top:14px"></div>
   </header>
 
   <!-- ── Toast ────────────────────────────────────────── -->
@@ -518,13 +587,11 @@
   <!-- ── Card 0: Archivo Excel ────────────────────────── -->
   <div class="card">
     <div class="label">📂 Archivo Excel</div>
-
     <div class="file-zone" id="fileZone">
       <input type="file" id="fileInput" accept=".xlsx,.xls" onchange="cargarExcel(event)"/>
       <div class="fz-icon">📊</div>
       <div class="fz-text"><strong>Selecciona ubicacion.xlsx</strong><br>Toca aquí para buscar el archivo</div>
     </div>
-
     <div class="file-ok" id="fileOk" style="display:none">
       ✓ <span id="fileInfo">—</span>
     </div>
@@ -559,14 +626,15 @@
     </button>
   </div>
 
-  <!-- ── Guardar ───────────────────────────────────────── -->
-  <button class="btn-primary" id="btnGuardar" onclick="guardar()" disabled>
-    Guardar y descargar Excel
-  </button>
-
-  <button class="btn-link" id="btnDl" onclick="descargar()" disabled>
-    ↓ Descargar Excel sin cambios
-  </button>
+  <!-- ── Botones de acción (2) ─────────────────────────── -->
+  <div class="action-row">
+    <button class="btn-primary" id="btnGuardar" onclick="guardar()" disabled>
+      💾 Guardar Excel
+    </button>
+    <button class="btn-secondary" id="btnDl" onclick="descargar()" disabled>
+      ↓ Descargar Excel
+    </button>
+  </div>
 
   <!-- ── Historial ─────────────────────────────────────── -->
   <div class="hist-wrap" id="histWrap" style="display:none">
@@ -579,26 +647,33 @@
   <footer>Por Roberto Fierro A.</footer>
 </div>
 
-<!-- ──────────────────────────────────────────────────── -->
 <script>
-/* ═══ Estado ════════════════════════════════════════════ */
-let wb        = null;
-let filas     = [];
-let visitaSel = '';
-let gpsVal    = '';
-let hist      = [];
+/* ═══════════════════════════════════════════════════════
+   Estado global
+═══════════════════════════════════════════════════════ */
+let wb        = null;   // workbook SheetJS en memoria
+let filas     = [];     // array de filas del Excel
+let visitaSel = '';     // "Semanal" o "Quincenal"
+let gpsVal    = '';     // "lat,lng"
+let hist      = [];     // historial visual de la sesión
+let fileName  = 'ubicacion.xlsx'; // nombre del archivo cargado
 
-/* ═══ Toast ═════════════════════════════════════════════ */
+/* ═══════════════════════════════════════════════════════
+   Toast / estado visual
+═══════════════════════════════════════════════════════ */
 function toast(msg, tipo = '') {
   const el = document.getElementById('toast');
   el.className = tipo;
   document.getElementById('toastMsg').textContent = msg;
 }
 
-/* ═══ 0 · Cargar Excel ══════════════════════════════════ */
+/* ═══════════════════════════════════════════════════════
+   0 · Cargar Excel desde el dispositivo
+═══════════════════════════════════════════════════════ */
 function cargarExcel(e) {
   const file = e.target.files[0];
   if (!file) return;
+  fileName = file.name; // guardar nombre original
   toast('Leyendo archivo…', 'load');
 
   const reader = new FileReader();
@@ -608,6 +683,7 @@ function cargarExcel(e) {
       const ws = wb.Sheets[wb.SheetNames[0]];
       filas = XLSX.utils.sheet_to_json(ws, { defval: '' });
 
+      // Poblar el selector de clientes
       const sel = document.getElementById('selCliente');
       sel.innerHTML = '<option value="">— Selecciona un cliente —</option>';
       filas.forEach((f, i) => {
@@ -618,8 +694,9 @@ function cargarExcel(e) {
       });
       sel.disabled = false;
 
-      document.getElementById('fileOk').style.display = 'flex';
-      document.getElementById('fileInfo').textContent = `${file.name} · ${filas.length} clientes`;
+      // Mostrar confirmación de carga
+      document.getElementById('fileOk').style.display  = 'flex';
+      document.getElementById('fileInfo').textContent  = `${file.name} · ${filas.length} clientes`;
       document.getElementById('fileZone').style.display = 'none';
       document.getElementById('btnDl').disabled = false;
 
@@ -632,7 +709,9 @@ function cargarExcel(e) {
   reader.readAsArrayBuffer(file);
 }
 
-/* ═══ 2 · Visita ════════════════════════════════════════ */
+/* ═══════════════════════════════════════════════════════
+   2 · Seleccionar tipo de visita
+═══════════════════════════════════════════════════════ */
 function elegirVisita(btn) {
   document.querySelectorAll('.tog').forEach(b => b.classList.remove('on'));
   btn.classList.add('on');
@@ -640,7 +719,9 @@ function elegirVisita(btn) {
   checkForm();
 }
 
-/* ═══ 3 · GPS ═══════════════════════════════════════════ */
+/* ═══════════════════════════════════════════════════════
+   3 · Capturar GPS
+═══════════════════════════════════════════════════════ */
 function capturarGPS() {
   if (!navigator.geolocation) {
     toast('GPS no disponible en este navegador', 'err');
@@ -670,9 +751,9 @@ function capturarGPS() {
       btn.disabled = false;
       btn.innerHTML = '<span>📡</span> Capturar ubicación actual';
       const m = {
-        1: 'Permiso denegado — activa ubicación en ajustes',
-        2: 'No se pudo determinar la posición',
-        3: 'Tiempo agotado — intenta de nuevo',
+        1: 'Permiso denegado — activa ubicación en ajustes del navegador',
+        2: 'No se pudo determinar la posición actual',
+        3: 'Tiempo agotado — intenta de nuevo al aire libre',
       };
       toast(m[err.code] || 'Error al obtener GPS', 'err');
     },
@@ -680,40 +761,49 @@ function capturarGPS() {
   );
 }
 
-/* ═══ Validar ═══════════════════════════════════════════ */
+/* ═══════════════════════════════════════════════════════
+   Validar si el formulario está completo
+═══════════════════════════════════════════════════════ */
 function checkForm() {
   const idx = document.getElementById('selCliente').value;
-  document.getElementById('btnGuardar').disabled =
-    !(idx !== '' && visitaSel && gpsVal && wb);
+  const ok  = idx !== '' && visitaSel !== '' && gpsVal !== '' && wb !== null;
+  document.getElementById('btnGuardar').disabled = !ok;
 }
 
-/* ═══ Guardar ═══════════════════════════════════════════ */
+/* ═══════════════════════════════════════════════════════
+   BOTÓN 1 — Guardar Excel
+   Actualiza los datos en el workbook en memoria
+   y re-graba el archivo con el mismo nombre original.
+═══════════════════════════════════════════════════════ */
 function guardar() {
   const idx = parseInt(document.getElementById('selCliente').value);
   if (isNaN(idx)) return;
 
+  // Escribir en la fila del cliente seleccionado
   filas[idx]['Visita al Cliente'] = visitaSel;
   filas[idx]['Ubicacion']         = gpsVal;
-
   const nombreCliente = filas[idx]['Nombre Cliente'];
 
-  // Actualizar workbook en memoria
+  // Actualizar workbook en memoria con los datos nuevos
   wb.Sheets[wb.SheetNames[0]] = XLSX.utils.json_to_sheet(filas);
 
-  // Historial visual
+  // Guardar con el mismo nombre que se cargó originalmente
+  XLSX.writeFile(wb, fileName);
+
+  // Animación de éxito en el botón
+  const btn = document.getElementById('btnGuardar');
+  btn.textContent = '✓ Guardado';
+  btn.classList.add('pop');
+  setTimeout(() => {
+    btn.textContent = '💾 Guardar Excel';
+    btn.classList.remove('pop');
+  }, 1700);
+
+  // Agregar al historial visual
   hist.unshift({ n: nombreCliente, v: visitaSel, g: gpsVal });
   renderHist();
 
-  // Descargar
-  descargar();
-
-  // Feedback de éxito
-  const btn = document.getElementById('btnGuardar');
-  const orig = btn.textContent;
-  btn.textContent = '✓ Guardado';
-  setTimeout(() => { btn.textContent = orig; }, 1600);
-
-  // Reset
+  // Reset del formulario
   visitaSel = ''; gpsVal = '';
   document.querySelectorAll('.tog').forEach(b => b.classList.remove('on'));
   document.getElementById('gpsTxt').textContent = 'Sin capturar';
@@ -723,16 +813,24 @@ function guardar() {
   checkForm();
 
   toast(`Guardado: ${nombreCliente}`, 'ok');
-  setTimeout(() => toast('Comparte el Excel por WhatsApp o correo'), 2200);
+  setTimeout(() => toast('Comparte el archivo por WhatsApp o correo'), 2300);
 }
 
-/* ═══ Descargar ═════════════════════════════════════════ */
+/* ═══════════════════════════════════════════════════════
+   BOTÓN 2 — Descargar Excel
+   Descarga el estado actual del workbook en memoria
+   (puede haber cambios guardados previamente o no).
+═══════════════════════════════════════════════════════ */
 function descargar() {
-  if (!wb) return;
-  XLSX.writeFile(wb, 'ubicacion.xlsx');
+  if (!wb) { toast('Primero carga un archivo Excel', 'err'); return; }
+  XLSX.writeFile(wb, fileName);
+  toast('Descargando ' + fileName + '…', 'load');
+  setTimeout(() => toast('Revisa tu carpeta de descargas'), 1800);
 }
 
-/* ═══ Historial ═════════════════════════════════════════ */
+/* ═══════════════════════════════════════════════════════
+   Historial visual de la sesión
+═══════════════════════════════════════════════════════ */
 function renderHist() {
   const wrap = document.getElementById('histWrap');
   const list = document.getElementById('histList');
@@ -751,12 +849,14 @@ function renderHist() {
   });
 }
 
-/* ═══ Service Worker ════════════════════════════════════ */
+/* ═══════════════════════════════════════════════════════
+   Service Worker (PWA offline)
+═══════════════════════════════════════════════════════ */
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
     navigator.serviceWorker.register('./sw.js')
-      .then(() => console.log('SW registrado'))
-      .catch(e => console.warn('SW error:', e));
+      .then(() => console.log('✓ SW registrado'))
+      .catch(err => console.warn('SW error:', err));
   });
 }
 </script>
