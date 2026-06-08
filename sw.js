@@ -1,4 +1,4 @@
-const CACHE = 'pdv-visitas-v1';
+const CACHE = 'pdv-visitas-v1.1';
 const ASSETS = [
   './',
   './index.html',
