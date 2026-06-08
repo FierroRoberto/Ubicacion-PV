@@ -3,7 +3,7 @@
 App móvil premium para registrar visitas a clientes con GPS.  
 **Sin instalación de Node, sin servidor, funciona offline.**
 
----
+\---
 
 ## 📁 Estructura del proyecto
 
@@ -18,28 +18,33 @@ pwa-visitas/
 └── README.md         ← Este archivo
 ```
 
----
+\---
 
 ## 🚀 Cómo subir a GitHub Pages (paso a paso)
 
 ### Paso 1 — Crear cuenta en GitHub (si no tienes)
+
 1. Ve a [github.com](https://github.com)
 2. Crea una cuenta gratuita
 
 ### Paso 2 — Crear repositorio nuevo
+
 1. Haz clic en el botón verde **"New"** (o el ícono `+`)
 2. Nombre del repositorio: `pdv-visitas` (o el que quieras)
 3. Elige **Public**
 4. Haz clic en **"Create repository"**
 
 ### Paso 3 — Subir los archivos
+
 En la página de tu nuevo repositorio vacío:
+
 1. Haz clic en **"uploading an existing file"**
 2. Arrastra TODA la carpeta `pwa-visitas` (o selecciona todos los archivos)
 3. Asegúrate de incluir la carpeta `icons/` con todas las imágenes
 4. Haz clic en **"Commit changes"** (botón verde abajo)
 
 ### Paso 4 — Activar GitHub Pages
+
 1. Ve a **Settings** (pestaña en tu repositorio)
 2. En el menú izquierdo busca **"Pages"**
 3. En "Source" selecciona **"Deploy from a branch"**
@@ -47,29 +52,34 @@ En la página de tu nuevo repositorio vacío:
 5. Haz clic en **"Save"**
 
 ### Paso 5 — Obtener tu URL
+
 Después de 1-2 minutos, tu app estará en:
+
 ```
-https://TU_USUARIO.github.io/pdv-visitas/
+https://fierroroberto.github.io/Ubicacion-PV/
 ```
+
 ¡Comparte ese link con tus vendedores!
 
----
+\---
 
 ## 📱 Cómo instalar la app en el celular
 
 ### En Android (Chrome):
+
 1. Abre el link de GitHub Pages en Chrome
 2. Aparecerá un banner abajo que dice **"Agregar a pantalla de inicio"**
 3. Si no aparece: toca los 3 puntos (⋮) → "Agregar a pantalla de inicio"
 4. Confirma y listo — aparecerá como ícono en tu pantalla
 
 ### En iPhone (Safari):
+
 1. Abre el link en Safari (importante: no Chrome)
 2. Toca el ícono de compartir (cuadrado con flecha arriba)
 3. Desliza y toca **"Agregar a pantalla de inicio"**
 4. Confirma
 
----
+\---
 
 ## 📋 Cómo usar la app
 
@@ -79,24 +89,24 @@ https://TU_USUARIO.github.io/pdv-visitas/
 4. **Captura GPS** → Toca el botón y acepta el permiso de ubicación
 5. **Guarda** → El Excel se descarga automáticamente con los datos
 
-> 💡 **Tip:** Comparte el Excel descargado por WhatsApp o correo.
+> 💡 \*\*Tip:\*\* Comparte el Excel descargado por WhatsApp o correo.
 
----
+\---
 
 ## 📊 Formato del archivo Excel
 
 El archivo `ubicacion.xlsx` debe tener estas columnas exactas en la primera fila:
 
-| Nombre Cliente | Visita al Cliente | Ubicacion |
-|---|---|---|
-| Ferretería El Clavo | Semanal | 20.603218,-101.370621 |
-| Materiales Querétaro | | |
+|Nombre Cliente|Visita al Cliente|Ubicacion|
+|-|-|-|
+|Ferretería El Clavo|Semanal|20.603218,-101.370621|
+|Materiales Querétaro|||
 
-- **Nombre Cliente** — Nombre del cliente (se carga automático)
-- **Visita al Cliente** — Se llena con "Semanal" o "Quincenal"
-- **Ubicacion** — Se llena con "latitud,longitud" al capturar GPS
+* **Nombre Cliente** — Nombre del cliente (se carga automático)
+* **Visita al Cliente** — Se llena con "Semanal" o "Quincenal"
+* **Ubicacion** — Se llena con "latitud,longitud" al capturar GPS
 
----
+\---
 
 ## ❓ Preguntas frecuentes
 
@@ -112,6 +122,7 @@ Edita el Excel con la nueva lista de clientes y vuelve a cargarlo en la app.
 **¿Los datos se guardan en la nube?**  
 No — todo se procesa localmente en el celular. El Excel se descarga para que tú lo compartas.
 
----
+\---
 
 *Por Roberto Fierro A.*
+
